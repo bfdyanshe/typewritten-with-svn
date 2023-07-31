@@ -15,6 +15,7 @@ async_init
 
 source "$TYPEWRITTEN_ROOT/lib/colors.zsh"
 source "$TYPEWRITTEN_ROOT/lib/git.zsh"
+source "$TYPEWRITTEN_ROOT/lib/svn.zsh"
 
 BREAK_LINE="
 "
@@ -36,7 +37,9 @@ if [ "$TYPEWRITTEN_DISABLE_RETURN_CODE" = true ]; then
   tw_return_code=""
 fi;
 
-tw_user_host="%F{$tw_colors[host]}%n%F{$tw_colors[host_user_connector]}@%F{$tw_colors[user]}%m"
+# %n is username, %m is hostname
+# tw_user_host="%F{$tw_colors[host]}%n%F{$tw_colors[host_user_connector]}@%F{$tw_colors[user]}%m"
+tw_user_host="%F{$tw_colors[host]}%n"
 tw_prompt="$tw_prompt_color$tw_return_code$tw_prompt_symbol %F{$tw_colors[prompt]}"
 
 tw_current_directory_color="$tw_colors[current_directory]"
@@ -164,6 +167,7 @@ tw_redraw() {
     if [ "$tw_layout" = "pure_verbose" ]; then
       PROMPT="$BREAK_LINE$tw_user_host $tw_displayed_wd$tw_git_arrow_info$BREAK_LINE$tw_full_prompt"
       RPROMPT=""
+      RPROMPT+="$tw_prompt_data[svn_prompt_info]"
     fi;
 
     if [ "$tw_layout" = "singleline_verbose" ]; then
@@ -230,6 +234,15 @@ tw_async_init_tasks() {
   else
     tw_prompt_data[tw_git_branch]=
     tw_prompt_data[tw_git_status]=
+  fi;
+  
+  if [[ "$(echo $plugins | grep 'svn-fast-info')" != "" ]]; then
+    local check_svn_info="$(tw_check_svn)"
+    if [[ "$check_svn_info" == true ]]; then
+      async_job tw_worker svn_prompt_info
+    else
+      tw_prompt_data[svn_prompt_info]=
+    fi;
   fi;
 
   tw_redraw
